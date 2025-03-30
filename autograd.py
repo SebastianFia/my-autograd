@@ -27,23 +27,39 @@ class Value:
             return f"{self.label}({self.val})"
 
     def __add__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Add()([self, other])
 
+    def __radd__(self, other):
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
+        return Add()([other, self])
+
     def __mul__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Mul()([self, other])
 
+    def __rmul__(self, other):
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
+        return Mul()([other, self])
+
     def __sub__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Sub()([self, other])
 
+    def __rsub__(self, other):
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
+        return Sub()([other, self])
+
     def __truediv__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Div()([self, other])
 
+    def __rtruediv__(self, other):
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
+        return Div()([other, self])
+
     def __pow__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Pow()([self, other])
     
     def __neg__(self):
