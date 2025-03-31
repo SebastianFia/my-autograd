@@ -61,6 +61,9 @@ class Value:
     def __pow__(self, other):
         other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         return Pow()([self, other])
+
+    def __rpow(self, other):
+        return NotImplemented
     
     def __neg__(self):
         return Mul()([self, Value(-1.0, requires_grad=False)])
@@ -101,14 +104,14 @@ class Value:
             for i, child in enumerate(curr.children):
                 if child.requires_grad:
                     #accumulate the gradients on each child: the grad can come from multiple paths
-                    child.grad += grads[i] * self.grad 
+                    child.grad += grads[i] * curr.grad 
 
             for child in curr.children:
                 if child.requires_grad:
                     stack.append(child) 
             
 
-    def print_children_tree(self, depth=0, indent=" |", show_grad=False):
+    def print_children_tree(self, depth=0, indent=" |", show_grad=True):
         total_indent = indent*depth
         grad_str = "grad=" + f"{self.grad:.3f}" + ", " if show_grad and self.requires_grad else ""
         operation_str = self.operation if self.operation != None else ""
@@ -145,15 +148,16 @@ class Div(DifferentiableFn):
     def __call__(self, x: List[Value]) -> Value:
         return Value(x[0].val / x[1].val, operation=self, children=x)
     def gradient(self, x: List[Value]) -> List[float]:
-        return [1.0, -x[1].val**(-2.0)]
+        return [1 / x[1].val, -x[0].val * (x[1].val ** (-2.0))]
     def __repr__(self):
         return "div"
 
+#x0^x1 -> x1*x0^x1-1
 class Pow(DifferentiableFn):
     def __call__(self, x: List[Value]) -> Value:
         return Value(x[0].val ** x[1].val, operation=self, children=x)
     def gradient(self, x: List[Value]) -> List[float]:
-        return [x[1].val * (x[0].val ** (x[1].val - 1)), math.log(x[0].val) * x[0].val ** x[1].val]
+        return [x[1].val * (x[0].val ** (x[1].val - 1)), 0.0]
     def __repr__(self):
         return "pow"
 

@@ -2,7 +2,14 @@ import random
 from autograd import Value, Relu
 from typing import List
 
-class Neuron:
+class Module:
+    def params(self):
+        return []
+    def zero_grad(self):
+        for param in self.params():
+            param.grad = 0.0
+
+class Neuron(Module):
     def __init__(self, input_len: int, activation_fn=Relu()):
         self.w = [Value(random.uniform(-1, 1)) for _ in range(input_len)]
         self.b = Value(random.uniform(-1, 1))
@@ -11,8 +18,11 @@ class Neuron:
     def __call__(self, inputs: List[Value]):
         activation = sum(input * weight for input, weight in zip(inputs, self.w)) + self.b
         return self.activation_fn(activation)
+    
+    def params(self):
+        return self.w + [self.b]
 
-class Layer:
+class Layer(Module):
     def __init__(self, input_len: int, n_neurons: int, activation_fn=Relu()):
         self.neurons = [Neuron(input_len, activation_fn) for _ in range(n_neurons)]
         self.input_len = input_len
@@ -21,7 +31,10 @@ class Layer:
     def __call__(self, inputs: List[Value]):
         return [neuron(inputs) for neuron in self.neurons]
 
-class MLP:
+    def params(self):
+        return [param for neuron in self.neurons for param in neuron.params()]
+
+class MLP(Module):
     def __init__(self):
         self.layers = []
 
@@ -37,3 +50,6 @@ class MLP:
         for layer in self.layers:
             x = layer(x)
         return x
+
+    def params(self):
+        return [param for layer in self.layers for param in layer.params()]
